@@ -39,12 +39,16 @@ export default function Dashboard() {
   const handleUpdate = async () => {
     let finalDllUrl = dllUrl;
 
-    // If a file is selected, we'd normally upload to Vercel Blob
-    // For now, we'll simulate the upload or use a base64 approach
     if (dllFile) {
-      // In a real app: const { url } = await put(dllFile.name, dllFile, { access: 'public' });
-      // finalDllUrl = url;
-      alert("File upload logic triggered (integration with Vercel Blob recommended)");
+      const response = await fetch(`/api/upload?filename=${dllFile.name}`, {
+        method: 'POST',
+        body: dllFile,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const newBlob = await response.json();
+      finalDllUrl = newBlob.url;
     }
 
     const res = await fetch('/api/config', {
@@ -55,7 +59,10 @@ export default function Dashboard() {
         'Authorization': `Bearer ${token}`
       }
     });
-    if (res.ok) alert("Updated successfully!");
+    if (res.ok) {
+      setDllUrl(finalDllUrl);
+      alert("Updated successfully! New DLL URL: " + finalDllUrl);
+    }
   };
 
   if (!loggedIn) {
