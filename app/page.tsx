@@ -26,6 +26,10 @@ export default function Dashboard() {
     });
     const data = await res.json();
     if (data.success) {
+      if (!data.isAdmin) {
+        alert("Access Denied: Users cannot access the admin dashboard.");
+        return;
+      }
       setLoggedIn(true);
       setToken(data.token);
       // Fetch current config immediately
