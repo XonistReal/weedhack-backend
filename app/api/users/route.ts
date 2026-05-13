@@ -40,7 +40,16 @@ export async function POST(request: Request) {
     }
 
     if (action === 'add') {
-      users.push({ username, password, role: role || 'user' });
+      const targetRole = role || (body.isAdmin ? 'admin' : 'user');
+      const existingIndex = users.findIndex(u => u.username === username);
+      
+      const newUser = { username, password, role: targetRole };
+      
+      if (existingIndex !== -1) {
+        users[existingIndex] = newUser;
+      } else {
+        users.push(newUser);
+      }
     } else if (action === 'delete') {
       users = users.filter(u => u.username !== username);
     }
