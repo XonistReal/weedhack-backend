@@ -5,11 +5,6 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    // Default admin
-    if (username === 'admin' && password === 'Jo3l2006!') {
-      return NextResponse.json({ success: true, token: 'weedhack_session_token_1337', isAdmin: true });
-    }
-
     // Check users.json in Blob
     const { blobs } = await list();
     const usersBlob = blobs.find(b => b.pathname === 'users.json');
@@ -20,7 +15,7 @@ export async function POST(request: Request) {
       
       const user = users.find((u: any) => u.username === username && u.password === password);
       if (user) {
-        return NextResponse.json({ success: true, token: 'weedhack_session_token_1337', isAdmin: false });
+        return NextResponse.json({ success: true, token: 'weedhack_session_token_1337', isAdmin: !!user.isAdmin });
       }
     }
 
