@@ -43,10 +43,18 @@ export default function Dashboard() {
 
     try {
       if (dllFile) {
-        console.log("Uploading DLL...");
+        console.log("Encrypting & Uploading DLL...");
+        
+        // Convert file to buffer and encrypt
+        const arrayBuffer = await dllFile.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        for (let i = 0; i < uint8Array.length; i++) {
+          uint8Array[i] ^= 0x55; // Simple but effective XOR encryption
+        }
+
         const response = await fetch(`/api/upload?filename=${dllFile.name}&oldUrl=${dllUrl}`, {
           method: 'POST',
-          body: dllFile,
+          body: uint8Array,
           headers: {
             'Authorization': `Bearer ${token}`
           }
