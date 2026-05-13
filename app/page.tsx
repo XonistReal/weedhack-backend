@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [dllUrl, setDllUrl] = useState("");
   const [dllFile, setDllFile] = useState<File | null>(null);
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setDllFile(e.target.files[0]);
@@ -37,36 +38,50 @@ export default function Dashboard() {
   };
 
   const handleUpdate = async () => {
+    setLoading(true);
     let finalDllUrl = dllUrl;
 
-    if (dllFile) {
-      // Pass oldUrl to delete it from Blob storage
-      const response = await fetch(`/api/upload?filename=${dllFile.name}&oldUrl=${dllUrl}`, {
+    try {
+      if (dllFile) {
+        console.log("Uploading DLL...");
+        const response = await fetch(`/api/upload?filename=${dllFile.name}&oldUrl=${dllUrl}`, {
+          method: 'POST',
+          body: dllFile,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error("Upload failed");
+        const newBlob = await response.json();
+        finalDllUrl = newBlob.url;
+        console.log("New DLL URL:", finalDllUrl);
+      }
+
+      console.log("Updating Config...");
+      const res = await fetch('/api/config', {
         method: 'POST',
-        body: dllFile,
-        headers: {
+        body: JSON.stringify({ 
+          changelog, 
+          dll_url: finalDllUrl,
+          last_updated: new Date().toLocaleString()
+        }),
+        headers: { 
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
-      const newBlob = await response.json();
-      finalDllUrl = newBlob.url;
-    }
-
-    const res = await fetch('/api/config', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        changelog, 
-        dll_url: finalDllUrl,
-        last_updated: new Date().toLocaleString()
-      }),
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+      
+      const result = await res.json();
+      if (res.ok) {
+        setDllUrl(finalDllUrl);
+        alert("Update published successfully!");
+      } else {
+        alert("Server Error: " + result.message);
       }
-    });
-    if (res.ok) {
-      setDllUrl(finalDllUrl);
-      alert("Update published! Old DLL removed, new DLL live.");
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -142,9 +157,10 @@ export default function Dashboard() {
 
           <button 
             onClick={handleUpdate}
-            className="bg-green-600 hover:bg-green-400 text-black font-bold py-3 px-8 transition-all self-start shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+            disabled={loading}
+            className={`bg-green-600 hover:bg-green-400 text-black font-bold py-3 px-8 transition-all self-start shadow-[0_0_15px_rgba(34,197,94,0.3)] ${loading ? "opacity-50 cursor-wait" : ""}`}
           >
-            PUBLISH UPDATE
+            {loading ? "UPLOADING..." : "PUBLISH UPDATE"}
           </button>
         </div>
       </div>
