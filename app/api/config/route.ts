@@ -15,11 +15,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Find the latest config file in Blob storage
-    const { blobs } = await list({ prefix: 'config.json' });
-    if (blobs.length > 0) {
-      const response = await fetch(blobs[0].url);
-      return NextResponse.json(await response.json());
+    // Search more broadly for any config file
+    const { blobs } = await list();
+    const configBlob = blobs.find(b => b.pathname.startsWith('config'));
+    
+    if (configBlob) {
+      const response = await fetch(configBlob.url);
+      const data = await response.json();
+      return NextResponse.json(data);
     }
   } catch (e) {
     console.error("Blob read error", e);
