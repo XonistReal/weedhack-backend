@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const { blobs } = await list();
     const usersBlob = blobs.find(b => b.pathname === 'users.json');
     if (usersBlob) {
-      const response = await fetch(usersBlob.url);
+      const response = await fetch(usersBlob.url, { cache: 'no-store' });
       users = await response.json();
       await del(usersBlob.url); // Prepare for overwrite
     }
