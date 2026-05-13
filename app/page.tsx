@@ -24,7 +24,7 @@ export default function Dashboard() {
     if (data.success) {
       setLoggedIn(true);
       setToken(data.token);
-      // Fetch current config
+      // Fetch current config immediately
       const configRes = await fetch('/api/config', {
         headers: { 'Authorization': `Bearer ${data.token}` }
       });
@@ -40,7 +40,8 @@ export default function Dashboard() {
     let finalDllUrl = dllUrl;
 
     if (dllFile) {
-      const response = await fetch(`/api/upload?filename=${dllFile.name}`, {
+      // Pass oldUrl to delete it from Blob storage
+      const response = await fetch(`/api/upload?filename=${dllFile.name}&oldUrl=${dllUrl}`, {
         method: 'POST',
         body: dllFile,
         headers: {
@@ -53,7 +54,11 @@ export default function Dashboard() {
 
     const res = await fetch('/api/config', {
       method: 'POST',
-      body: JSON.stringify({ changelog, dll_url: finalDllUrl }),
+      body: JSON.stringify({ 
+        changelog, 
+        dll_url: finalDllUrl,
+        last_updated: new Date().toLocaleString()
+      }),
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -61,7 +66,7 @@ export default function Dashboard() {
     });
     if (res.ok) {
       setDllUrl(finalDllUrl);
-      alert("Updated successfully! New DLL URL: " + finalDllUrl);
+      alert("Update published! Old DLL removed, new DLL live.");
     }
   };
 
