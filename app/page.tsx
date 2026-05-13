@@ -10,6 +10,9 @@ export default function Dashboard() {
   const [dllFile, setDllFile] = useState<File | null>(null);
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setDllFile(e.target.files[0]);
@@ -32,6 +35,13 @@ export default function Dashboard() {
       const config = await configRes.json();
       setChangelog(config.changelog);
       setDllUrl(config.dll_url);
+
+      // Fetch users
+      const usersRes = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${data.token}` }
+      });
+      const usersData = await usersRes.json();
+      setUsers(usersData);
     } else {
       alert("Invalid credentials");
     }
@@ -91,6 +101,31 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddUser = async () => {
+    if (!newUsername || !newPassword) return;
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ username: newUsername, password: newPassword, action: 'add' }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      setUsers(data.users);
+      setNewUsername("");
+      setNewPassword("");
+    }
+  };
+
+  const handleDeleteUser = async (u: string) => {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ username: u, action: 'delete' }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) setUsers(data.users);
   };
 
   if (!loggedIn) {
@@ -170,6 +205,41 @@ export default function Dashboard() {
           >
             {loading ? "UPLOADING..." : "PUBLISH UPDATE"}
           </button>
+
+          <section className="mt-12 border-t border-zinc-800 pt-8">
+            <h2 className="text-xl mb-4 text-green-500">USER MANAGEMENT</h2>
+            <div className="flex gap-4 mb-6">
+              <input 
+                type="text" 
+                placeholder="New Username"
+                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+              />
+              <input 
+                type="text" 
+                placeholder="New Password"
+                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <button 
+                onClick={handleAddUser}
+                className="bg-green-600 px-4 py-2 text-black font-bold hover:bg-green-400 text-xs"
+              >
+                + ADD USER
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {users.map((u: any) => (
+                <div key={u.username} className="flex justify-between items-center bg-zinc-900 p-3 border border-green-900">
+                  <span className="text-sm">{u.username}</span>
+                  <button onClick={() => handleDeleteUser(u.username)} className="text-red-500 hover:text-red-300 text-[10px] uppercase font-bold">Delete</button>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     </div>
