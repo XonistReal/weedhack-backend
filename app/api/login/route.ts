@@ -15,7 +15,12 @@ export async function POST(request: Request) {
       
       const user = users.find((u: any) => u.username === username && u.password === password);
       if (user) {
-        return NextResponse.json({ success: true, token: 'weedhack_session_token_1337', isAdmin: !!user.isAdmin });
+        return NextResponse.json({ 
+          success: true, 
+          token: 'weedhack_session_token_1337', 
+          role: user.role || 'user',
+          isAdmin: user.role === 'admin'
+        });
       }
     }
 

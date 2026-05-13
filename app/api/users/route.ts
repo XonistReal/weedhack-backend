@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, password, action, isAdmin } = body;
+    const { username, password, action, role } = body;
     
     // Get current users
     let users: any[] = [];
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     if (action === 'add') {
-      users.push({ username, password, isAdmin: !!isAdmin });
+      users.push({ username, password, role: role || 'user' });
     } else if (action === 'delete') {
       users = users.filter(u => u.username !== username);
     }
