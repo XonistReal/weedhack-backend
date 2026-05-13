@@ -52,12 +52,19 @@ export async function POST(request: Request) {
       }
     } else if (action === 'delete') {
       users = users.filter(u => u.username !== username);
+    } else if (action === 'clear') {
+      users = [];
+      const { blobs } = await list();
+      const usersBlob = blobs.find(b => b.pathname === 'users.json');
+      if (usersBlob) await del(usersBlob.url);
     }
 
-    await put('users.json', JSON.stringify(users), {
-      access: 'public',
-      addRandomSuffix: false // We keep it constant for users.json
-    });
+    if (action !== 'clear' || users.length > 0) {
+      await put('users.json', JSON.stringify(users), {
+        access: 'public',
+        addRandomSuffix: false
+      });
+    }
 
     return NextResponse.json({ success: true, users });
   } catch (e) {
