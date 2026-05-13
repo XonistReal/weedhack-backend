@@ -1,65 +1,114 @@
-import Image from "next/image";
+"use client";
+import { useState } from 'react';
 
-export default function Home() {
+export default function Dashboard() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [changelog, setChangelog] = useState("");
+  const [dllUrl, setDllUrl] = useState("");
+  const [token, setToken] = useState("");
+
+  const handleLogin = async () => {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: user, password: pass }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success) {
+      setLoggedIn(true);
+      setToken(data.token);
+      // Fetch current config
+      const configRes = await fetch('/api/config', {
+        headers: { 'Authorization': `Bearer ${data.token}` }
+      });
+      const config = await configRes.json();
+      setChangelog(config.changelog);
+      setDllUrl(config.dll_url);
+    } else {
+      alert("Invalid credentials");
+    }
+  };
+
+  const handleUpdate = async () => {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({ changelog, dll_url: dllUrl }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (res.ok) alert("Updated successfully!");
+  };
+
+  if (!loggedIn) {
+    return (
+      <div className="min-h-screen bg-black text-green-500 flex items-center justify-center font-mono">
+        <div className="border border-green-900 p-8 rounded-lg bg-zinc-950 w-96 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+          <h1 className="text-2xl mb-6 text-center tracking-widest">WEEDHACK ADMIN</h1>
+          <input 
+            type="text" 
+            placeholder="Username" 
+            className="w-full bg-zinc-900 border border-green-900 p-2 mb-4 outline-none focus:border-green-500 transition-colors"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+          />
+          <input 
+            type="password" 
+            placeholder="Password" 
+            className="w-full bg-zinc-900 border border-green-900 p-2 mb-6 outline-none focus:border-green-500 transition-colors"
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+          />
+          <button 
+            onClick={handleLogin}
+            className="w-full bg-green-900 hover:bg-green-700 text-black font-bold p-2 transition-all"
+          >
+            LOGIN
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-black text-green-500 p-8 font-mono">
+      <div className="max-w-4xl mx-auto border border-green-900 p-8 rounded-lg bg-zinc-950 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
+        <div className="flex justify-between items-center mb-8 border-b border-green-900 pb-4">
+          <h1 className="text-3xl tracking-tighter">WEEDHACK <span className="text-zinc-600">DASHBOARD</span></h1>
+          <button onClick={() => setLoggedIn(false)} className="text-xs hover:text-white underline">LOGOUT</button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <div className="grid grid-cols-1 gap-8">
+          <section>
+            <h2 className="text-lg mb-2 opacity-70">CHANGELOG</h2>
+            <textarea 
+              className="w-full h-48 bg-zinc-900 border border-green-900 p-4 outline-none focus:border-green-500 text-sm"
+              value={changelog}
+              onChange={(e) => setChangelog(e.target.value)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </section>
+
+          <section>
+            <h2 className="text-lg mb-2 opacity-70">DLL DOWNLOAD URL</h2>
+            <input 
+              type="text" 
+              className="w-full bg-zinc-900 border border-green-900 p-3 outline-none focus:border-green-500"
+              value={dllUrl}
+              onChange={(e) => setDllUrl(e.target.value)}
+            />
+          </section>
+
+          <button 
+            onClick={handleUpdate}
+            className="bg-green-600 hover:bg-green-400 text-black font-bold py-3 px-8 transition-all self-start shadow-[0_0_15px_rgba(34,197,94,0.3)]"
           >
-            Documentation
-          </a>
+            PUBLISH UPDATE
+          </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
