@@ -107,11 +107,13 @@ export default function Dashboard() {
     }
   };
 
+  const [newRole, setNewRole] = useState("user");
+
   const handleAddUser = async () => {
     if (!newUsername || !newPassword) return;
     const res = await fetch('/api/users', {
       method: 'POST',
-      body: JSON.stringify({ username: newUsername, password: newPassword, action: 'add' }),
+      body: JSON.stringify({ username: newUsername, password: newPassword, action: 'add', role: newRole }),
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
@@ -119,6 +121,7 @@ export default function Dashboard() {
       setUsers(data.users);
       setNewUsername("");
       setNewPassword("");
+      setNewRole("user");
     }
   };
 
@@ -215,30 +218,44 @@ export default function Dashboard() {
             <div className="flex gap-4 mb-6">
               <input 
                 type="text" 
-                placeholder="New Username"
-                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm"
+                placeholder="Username"
+                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm w-32"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
               />
               <input 
                 type="text" 
-                placeholder="New Password"
-                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm"
+                placeholder="Password"
+                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm w-32"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
+              <select 
+                className="bg-zinc-900 border border-green-900 p-2 outline-none focus:border-green-500 text-sm"
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+              >
+                <option value="user">User</option>
+                <option value="beta">Beta</option>
+                <option value="admin">Admin</option>
+              </select>
               <button 
                 onClick={handleAddUser}
                 className="bg-green-600 px-4 py-2 text-black font-bold hover:bg-green-400 text-xs"
               >
-                + ADD USER
+                + ADD/UPDATE
               </button>
             </div>
 
             <div className="space-y-2">
               {users.map((u: any) => (
                 <div key={u.username} className="flex justify-between items-center bg-zinc-900 p-3 border border-green-900">
-                  <span className="text-sm">{u.username}</span>
+                  <div className="flex gap-4 items-center">
+                    <span className="text-sm font-bold">{u.username}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded border ${u.role === 'admin' ? 'border-red-900 text-red-500' : u.role === 'beta' ? 'border-yellow-900 text-yellow-500' : 'border-zinc-800 text-zinc-500'}`}>
+                      {u.role?.toUpperCase() || 'USER'}
+                    </span>
+                  </div>
                   <button onClick={() => handleDeleteUser(u.username)} className="text-red-500 hover:text-red-300 text-[10px] uppercase font-bold">Delete</button>
                 </div>
               ))}
